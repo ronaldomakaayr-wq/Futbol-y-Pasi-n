@@ -48,7 +48,16 @@ export class CloudinaryService implements OnModuleInit {
           unique_filename: true,
         },
         (error, result?: UploadApiResponse) => {
-          if (error) return reject(error);
+          if (error) {
+            const message =
+              (error as { message?: string }).message ?? 'Upload falló';
+            const httpCode = (error as { http_code?: number }).http_code;
+            return reject(
+              new Error(
+                `Cloudinary upload error${httpCode ? ` (${httpCode})` : ''}: ${message}`,
+              ),
+            );
+          }
           if (!result) return reject(new Error('Upload sin respuesta'));
           resolve({
             url: result.secure_url,

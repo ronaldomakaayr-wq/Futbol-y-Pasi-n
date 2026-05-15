@@ -33,7 +33,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const payload = this.buildPayload(exception, request, status, isHttp);
 
-    this.log(exception, payload, status);
+    this.log(exception, request, status);
 
     response.status(status).json(payload);
   }
@@ -52,28 +52,33 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: 'Error interno del servidor',
     };
 
-    if (!isHttp) {
-      return base;
+    if (isHttp) {
+      const original = (exception as HttpException).getResponse();
+      if (typeof original === 'string') {
+        return { ...base, message: original };
+      }
+      const data = original as Record<string, unknown>;
+      return {
+        ...base,
+        message: (data.message as string | string[]) ?? base.message,
+        ...(typeof data.error === 'string' && { error: data.error }),
+      };
     }
 
-    const original = (exception as HttpException).getResponse();
-    if (typeof original === 'string') {
-      return { ...base, message: original };
+    // Errores no-HTTP (bugs internos): solo exponer detalle fuera de producción.
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      exception instanceof Error &&
+      exception.message
+    ) {
+      return { ...base, message: exception.message };
     }
-
-    const data = original as Record<string, unknown>;
-    return {
-      ...base,
-      message: (data.message as string | string[]) ?? base.message,
-      ...(typeof data.error === 'string' && { error: data.error }),
-    };
+    return base;
   }
 
-  private log(exception: unknown, payload: ErrorBody, status: number): void {
-    const summary = `${payload.method} ${payload.path} → ${status}`;
-    const detail = Array.isArray(payload.message)
-      ? payload.message.join(' · ')
-      : payload.message;
+  private log(exception: unknown, request: Request, status: number): void {
+    const summary = `${request.method} ${request.url} → ${status}`;
+    const detail = this.describeException(exception);
 
     if (status >= 500) {
       const stack = exception instanceof Error ? exception.stack : undefined;
@@ -81,5 +86,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else {
       this.logger.warn(`${summary} | ${detail}`);
     }
+  }
+
+  private describeException(exception: unknown): string {
+    if (exception instanceof HttpException) {
+      const original = exception.getResponse();
+      if (typeof original === 'string') return original;
+      const data = original as Record<string, unknown>;
+      const message = data.message;
+      if (Array.isArray(message)) return message.join(' · ');
+      if (typeof message === 'string') return message;
+      return exception.message;
+    }
+    if (exception instanceof Error) {
+      return `${exception.name}: ${exception.message}`;
+    }
+    if (exception && typeof exception === 'object') {
+      const obj = exception as Record<string, unknown>;
+      const message = obj.message ?? obj.error ?? obj.error_description;
+      if (typeof message === 'string') return message;
+      try {
+        return JSON.stringify(exception);
+      } catch {
+        return String(exception);
+      }
+    }
+    return String(exception);
   }
 }
