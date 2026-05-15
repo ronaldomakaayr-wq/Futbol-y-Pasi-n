@@ -62,7 +62,7 @@ export class AuthService {
       return createdUser;
     });
 
-    return this.buildAuthResponse(user.id, user.email);
+    return this.buildAuthResponse(user);
   }
 
   async login(dto: LoginDto) {
@@ -76,7 +76,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    return this.buildAuthResponse(user.id, user.email);
+    return this.buildAuthResponse(user);
   }
 
   async me(userId: string) {
@@ -88,15 +88,16 @@ export class AuthService {
     return this.profilesService.updateByUserId(userId, dto);
   }
 
-  private async buildAuthResponse(userId: string, email: string) {
+  private async buildAuthResponse(user: User) {
     const accessToken = await this.jwtService.signAsync({
-      sub: userId,
-      email,
+      sub: user.id,
+      email: user.email,
+      role: user.role,
     });
 
     return {
       accessToken,
-      user: { id: userId, email },
+      user: { id: user.id, email: user.email, role: user.role },
     };
   }
 }

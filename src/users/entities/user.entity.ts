@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Profile } from '../../profiles/entities/profile.entity';
+import { UserRole } from '../enums/user-role.enum';
 
 @Entity({ name: 'users' })
 export class User {
@@ -17,6 +18,13 @@ export class User {
 
   @Column()
   password!: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  role!: UserRole;
 
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
