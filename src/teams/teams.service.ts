@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CloudinaryService } from '../media/cloudinary.service';
+import { TournamentTeam } from '../tournaments/entities/tournament-team.entity';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from './entities/team.entity';
@@ -11,6 +16,8 @@ export class TeamsService {
   constructor(
     @InjectRepository(Team)
     private readonly teams: Repository<Team>,
+    @InjectRepository(TournamentTeam)
+    private readonly registrations: Repository<TournamentTeam>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -65,6 +72,16 @@ export class TeamsService {
 
   async remove(id: string): Promise<void> {
     const team = await this.findById(id);
+
+    const registered = await this.registrations.count({
+      where: { teamId: id },
+    });
+    if (registered > 0) {
+      throw new ConflictException(
+        'No se puede eliminar el equipo porque está inscrito en uno o más torneos',
+      );
+    }
+
     if (team.logoPublicId) {
       await this.safeDeleteLogo(team.logoPublicId);
     }

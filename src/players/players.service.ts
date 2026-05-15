@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { CloudinaryService } from '../media/cloudinary.service';
+import { TournamentRoster } from '../tournaments/entities/tournament-roster.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { Player } from './entities/player.entity';
@@ -15,6 +16,8 @@ export class PlayersService {
   constructor(
     @InjectRepository(Player)
     private readonly players: Repository<Player>,
+    @InjectRepository(TournamentRoster)
+    private readonly rosters: Repository<TournamentRoster>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -94,6 +97,14 @@ export class PlayersService {
 
   async remove(id: string): Promise<void> {
     const player = await this.findById(id);
+
+    const rostered = await this.rosters.count({ where: { playerId: id } });
+    if (rostered > 0) {
+      throw new ConflictException(
+        'No se puede eliminar el jugador porque está en el roster de uno o más torneos',
+      );
+    }
+
     if (player.photoPublicId) {
       await this.safeDeletePhoto(player.photoPublicId);
     }

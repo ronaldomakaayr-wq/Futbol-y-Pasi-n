@@ -8,6 +8,7 @@ import { dataSourceOptions } from './database/data-source';
 import { MediaModule } from './media/media.module';
 import { PlayersModule } from './players/players.module';
 import { TeamsModule } from './teams/teams.module';
+import { TournamentsModule } from './tournaments/tournaments.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     MediaModule,
     TeamsModule,
     PlayersModule,
+    TournamentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
