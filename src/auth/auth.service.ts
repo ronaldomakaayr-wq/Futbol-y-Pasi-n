@@ -11,6 +11,7 @@ import { Profile } from '../profiles/entities/profile.entity';
 import { ProfilesService } from '../profiles/profiles.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { UpdateProfileDto } from '../profiles/dto/update-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -81,6 +82,10 @@ export class AuthService {
   async me(userId: string) {
     const profile = await this.profilesService.findByUserId(userId);
     return profile;
+  }
+
+  updateProfile(userId: string, dto: UpdateProfileDto) {
+    return this.profilesService.updateByUserId(userId, dto);
   }
 
   private async buildAuthResponse(userId: string, email: string) {
