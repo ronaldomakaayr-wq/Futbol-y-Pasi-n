@@ -88,6 +88,22 @@ export class Match {
   venue!: string | null;
 
   @Column({
+    name: 'home_formation',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  homeFormation!: string | null;
+
+  @Column({
+    name: 'away_formation',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  awayFormation!: string | null;
+
+  @Column({
     type: 'enum',
     enum: MatchStatus,
     default: MatchStatus.SCHEDULED,

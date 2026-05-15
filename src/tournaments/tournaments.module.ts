@@ -6,6 +6,9 @@ import { Team } from '../teams/entities/team.entity';
 import { GroupTeam } from './entities/group-team.entity';
 import { Group } from './entities/group.entity';
 import { MatchDay } from './entities/match-day.entity';
+import { MatchEvent } from './entities/match-event.entity';
+import { MatchLineup } from './entities/match-lineup.entity';
+import { MatchStats } from './entities/match-stats.entity';
 import { Match } from './entities/match.entity';
 import { Phase } from './entities/phase.entity';
 import { TournamentRoster } from './entities/tournament-roster.entity';
@@ -15,6 +18,12 @@ import { FixtureController } from './fixture.controller';
 import { FixtureService } from './fixture.service';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
+import { MatchEventsController } from './match-events.controller';
+import { MatchEventsService } from './match-events.service';
+import { MatchLineupsController } from './match-lineups.controller';
+import { MatchLineupsService } from './match-lineups.service';
+import { MatchStatsController } from './match-stats.controller';
+import { MatchStatsService } from './match-stats.service';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
 import { PhasesController } from './phases.controller';
@@ -37,6 +46,9 @@ import { TournamentsService } from './tournaments.service';
       GroupTeam,
       MatchDay,
       Match,
+      MatchEvent,
+      MatchLineup,
+      MatchStats,
       Team,
       Player,
     ]),
@@ -50,6 +62,9 @@ import { TournamentsService } from './tournaments.service';
     GroupsController,
     FixtureController,
     MatchesController,
+    MatchEventsController,
+    MatchLineupsController,
+    MatchStatsController,
   ],
   providers: [
     TournamentsService,
@@ -59,6 +74,9 @@ import { TournamentsService } from './tournaments.service';
     GroupsService,
     FixtureService,
     MatchesService,
+    MatchEventsService,
+    MatchLineupsService,
+    MatchStatsService,
   ],
   exports: [TournamentsService, RegistrationsService, RostersService],
 })

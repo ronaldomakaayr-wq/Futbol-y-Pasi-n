@@ -60,6 +60,10 @@ export class MatchesService {
       match.kickoff = dto.kickoff ? new Date(dto.kickoff) : null;
     }
     if (dto.venue !== undefined) match.venue = dto.venue ?? null;
+    if (dto.homeFormation !== undefined)
+      match.homeFormation = dto.homeFormation ?? null;
+    if (dto.awayFormation !== undefined)
+      match.awayFormation = dto.awayFormation ?? null;
     if (dto.homeScore !== undefined) match.homeScore = dto.homeScore ?? null;
     if (dto.awayScore !== undefined) match.awayScore = dto.awayScore ?? null;
     if (dto.homePenalties !== undefined)

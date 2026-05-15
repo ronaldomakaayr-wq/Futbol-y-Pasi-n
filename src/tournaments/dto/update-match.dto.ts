@@ -20,6 +20,16 @@ export class UpdateMatchDto {
   venue?: string | null;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  homeFormation?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  awayFormation?: string | null;
+
+  @IsOptional()
   @IsEnum(MatchStatus)
   status?: MatchStatus;
 
