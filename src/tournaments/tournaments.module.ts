@@ -26,12 +26,15 @@ import { MatchStatsController } from './match-stats.controller';
 import { MatchStatsService } from './match-stats.service';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
+import { LeaderboardsService } from './leaderboards.service';
 import { PhasesController } from './phases.controller';
 import { PhasesService } from './phases.service';
 import { RegistrationsController } from './registrations.controller';
 import { RegistrationsService } from './registrations.service';
 import { RostersController } from './rosters.controller';
 import { RostersService } from './rosters.service';
+import { StandingsService } from './standings.service';
+import { StatsController } from './stats.controller';
 import { TournamentsController } from './tournaments.controller';
 import { TournamentsService } from './tournaments.service';
 
@@ -65,6 +68,7 @@ import { TournamentsService } from './tournaments.service';
     MatchEventsController,
     MatchLineupsController,
     MatchStatsController,
+    StatsController,
   ],
   providers: [
     TournamentsService,
@@ -77,6 +81,8 @@ import { TournamentsService } from './tournaments.service';
     MatchEventsService,
     MatchLineupsService,
     MatchStatsService,
+    StandingsService,
+    LeaderboardsService,
   ],
   exports: [TournamentsService, RegistrationsService, RostersService],
 })

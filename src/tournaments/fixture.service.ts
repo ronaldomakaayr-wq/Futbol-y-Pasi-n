@@ -17,6 +17,7 @@ import { MatchStatus } from './enums/match-status.enum';
 import { PhaseType } from './enums/phase-type.enum';
 import { RegistrationStatus } from './enums/registration-status.enum';
 import { TournamentFormat } from './enums/tournament-format.enum';
+import { StandingsService } from './standings.service';
 
 interface BergerPair {
   home: string | null;
@@ -25,7 +26,10 @@ interface BergerPair {
 
 @Injectable()
 export class FixtureService {
-  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly standings: StandingsService,
+  ) {}
 
   async generate(tournamentId: string): Promise<{ phasesCreated: number; matchesCreated: number }> {
     return this.dataSource.transaction(async (manager) => {
@@ -353,6 +357,133 @@ export class FixtureService {
     }
 
     return { phases: phasesCreated, matches: matchesCreated };
+  }
+
+  /**
+   * Para torneos GROUPS_KNOCKOUT: tras cerrar la fase de grupos, popula los
+   * slots de la primera ronda del bracket con el top 2 de cada grupo siguiendo
+   * seeding cruzado (1A↔2B, 1B↔2A, 1C↔2D, 1D↔2C, ...).
+   */
+  async seedKnockoutFromGroups(
+    tournamentId: string,
+  ): Promise<{ matchesUpdated: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      const tournament = await manager.getRepository(Tournament).findOne({
+        where: { id: tournamentId },
+      });
+      if (!tournament) {
+        throw new NotFoundException('Torneo no encontrado');
+      }
+      if (tournament.format !== TournamentFormat.GROUPS_KNOCKOUT) {
+        throw new BadRequestException(
+          'Solo aplica a torneos GROUPS_KNOCKOUT',
+        );
+      }
+
+      const groupPhase = await manager.getRepository(Phase).findOne({
+        where: { tournamentId, type: PhaseType.GROUP_STAGE },
+      });
+      if (!groupPhase) {
+        throw new BadRequestException(
+          'No hay fase de grupos creada para este torneo',
+        );
+      }
+
+      // Validar que todos los partidos de grupos están FINISHED
+      const totalGroupMatches = await manager.getRepository(Match).count({
+        where: { tournamentId, phaseId: groupPhase.id },
+      });
+      const finishedGroupMatches = await manager.getRepository(Match).count({
+        where: {
+          tournamentId,
+          phaseId: groupPhase.id,
+          status: MatchStatus.FINISHED,
+        },
+      });
+      if (totalGroupMatches === 0) {
+        throw new BadRequestException(
+          'La fase de grupos no tiene partidos generados',
+        );
+      }
+      if (finishedGroupMatches < totalGroupMatches) {
+        throw new BadRequestException(
+          `Aún faltan ${totalGroupMatches - finishedGroupMatches} partido(s) por finalizar en la fase de grupos`,
+        );
+      }
+
+      // Standings por grupo
+      const allBlocks = await this.standings.forTournament(tournamentId);
+      const groupBlocks = allBlocks
+        .filter((b) => b.phaseId === groupPhase.id && b.groupId != null)
+        .sort((a, b) =>
+          (a.groupName ?? '').localeCompare(b.groupName ?? ''),
+        );
+
+      if (groupBlocks.length === 0) {
+        throw new BadRequestException(
+          'No se pudieron calcular las posiciones de los grupos',
+        );
+      }
+
+      // Top 2 de cada grupo
+      const seeds: Array<{ first: string; second: string }> = [];
+      for (const block of groupBlocks) {
+        if (block.rows.length < 2) {
+          throw new BadRequestException(
+            `El grupo ${block.groupName} no tiene suficientes equipos para clasificar 2`,
+          );
+        }
+        seeds.push({
+          first: block.rows[0].teamId,
+          second: block.rows[1].teamId,
+        });
+      }
+
+      // Cruces clásicos: para grupo i, su 1° enfrenta al 2° del grupo "compañero".
+      // Compañero de A=B, C=D, E=F, ... → seeds pareados de a 2.
+      const slots: Array<{ home: string; away: string }> = [];
+      for (let i = 0; i < seeds.length; i += 2) {
+        const a = seeds[i];
+        const b = seeds[i + 1];
+        if (!b) {
+          throw new BadRequestException(
+            'El número de grupos debe ser par para sembrar el bracket',
+          );
+        }
+        slots.push({ home: a.first, away: b.second });
+        slots.push({ home: b.first, away: a.second });
+      }
+
+      // Cargar la primera ronda del bracket (siguiente fase del torneo después
+      // de la GROUP_STAGE) y asignar los teams en orden de bracketPosition.
+      const firstBracketRound = await manager.getRepository(Match).find({
+        where: { tournamentId, bracketRound: 1 },
+        order: { bracketPosition: 'ASC' },
+      });
+
+      if (firstBracketRound.length !== slots.length) {
+        throw new BadRequestException(
+          `El bracket esperaba ${firstBracketRound.length} partido(s) pero hay ${slots.length} cruces calculados. Regenera el fixture.`,
+        );
+      }
+
+      let matchesUpdated = 0;
+      for (let i = 0; i < firstBracketRound.length; i++) {
+        const match = firstBracketRound[i];
+        const slot = slots[i];
+        if (
+          match.homeTeamId !== slot.home ||
+          match.awayTeamId !== slot.away
+        ) {
+          match.homeTeamId = slot.home;
+          match.awayTeamId = slot.away;
+          await manager.getRepository(Match).save(match);
+          matchesUpdated++;
+        }
+      }
+
+      return { matchesUpdated };
+    });
   }
 }
 

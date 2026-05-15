@@ -32,4 +32,11 @@ export class FixtureController {
   async drop(@Param('tournamentId', ParseUUIDPipe) tournamentId: string) {
     await this.fixture.drop(tournamentId);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post('seed-knockout')
+  seedKnockout(@Param('tournamentId', ParseUUIDPipe) tournamentId: string) {
+    return this.fixture.seedKnockoutFromGroups(tournamentId);
+  }
 }
