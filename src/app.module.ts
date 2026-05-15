@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { dataSourceOptions } from './database/data-source';
+import { MediaModule } from './media/media.module';
+import { TeamsModule } from './teams/teams.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -20,6 +22,8 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
     AuthModule,
+    MediaModule,
+    TeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
