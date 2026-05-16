@@ -107,26 +107,6 @@ GET /auth/me
 Authorization: Bearer <accessToken>
 ```
 
-Respuesta `200`:
-```json
-{
-  "id": "uuid",
-  "email": "tu@correo.com",
-  "profile": {
-    "id": "uuid",
-    "userId": "uuid",
-    "firstName": "Jesus",
-    "lastName": "Carevalo",
-    "documentType": "DNI",
-    "documentNumber": "12345678",
-    "phone": "+51987654321",
-    "birthDate": "1995-06-15",
-    "createdAt": "2026-05-12T07:15:56.414Z",
-    "updatedAt": "2026-05-12T07:15:56.414Z"
-  }
-}
-```
-
 Errores:
 - `401` — token ausente, inválido o expirado
 
