@@ -74,51 +74,6 @@ npm run lint
 
 ## Endpoints
 
-### Registro
-
-Crea un usuario (credenciales) y su perfil (datos personales) de forma atómica en una sola transacción.
-
-```http
-POST /auth/register
-Content-Type: application/json
-
-{
-  "email": "tu@correo.com",
-  "password": "secreto123",
-  "firstName": "Jesus",
-  "lastName": "Carevalo",
-  "documentType": "DNI",
-  "documentNumber": "12345678",
-  "phone": "+51987654321",
-  "birthDate": "1995-06-15"
-}
-```
-
-Campos:
-
-| Campo             | Tipo        | Obligatorio | Validación                                            |
-|-------------------|-------------|-------------|-------------------------------------------------------|
-| `email`           | string      | sí          | email válido, único                                   |
-| `password`        | string      | sí          | 6–72 caracteres                                       |
-| `firstName`       | string      | sí          | 2–60 caracteres                                       |
-| `lastName`        | string      | sí          | 2–60 caracteres                                       |
-| `documentType`    | enum        | sí          | `DNI`, `CE`, `PASAPORTE`, `RUC`                       |
-| `documentNumber`  | string      | sí          | alfanumérico 6–20, único por `documentType`           |
-| `phone`           | string      | no          | dígitos opcionales con `+`, longitud 7–15             |
-| `birthDate`       | string      | no          | formato `YYYY-MM-DD`                                  |
-
-Respuesta `201`:
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "user": { "id": "uuid", "email": "tu@correo.com" }
-}
-```
-
-Errores:
-- `400` — algún campo no cumple las validaciones (mensaje específico en `message`)
-- `409` — `El email ya está registrado` o `El documento ya está registrado`
-
 ### Login
 
 ```http
